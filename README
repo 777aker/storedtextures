@@ -3,14 +3,16 @@ hw07: Stored Textures
 Kelley Kelley
 CSCI4239/5239 Spring 2022
 
-Conway's game of life
+voronoi noise stored in a texture passed to frag shader
+adopted this tutorial
+https://www.ronja-tutorials.com/post/028-voronoi-noise/#3d-voronoi-1
 
-Time spent: 1 hr
-6:30 pm
+Time spent: 5 hr 30 min
 
 Key bindings:
 arrows - change view angle
 pgdn/pgup - zoom in and out
 0 - reset view angle
 -/+ - light height
+1 - change mode
 esc - exit

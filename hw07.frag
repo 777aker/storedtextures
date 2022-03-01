@@ -39,19 +39,8 @@ vec4 blinn() {
     return color;
 }
 
-const float Scale = 1.2;
-const vec4 Vein   = vec4(0.0,0.0,0.5,1.0);
-const vec4 Marble = vec4(0.8,0.8,0.8,1.0);
 uniform sampler2D Noise3D;
 
 void main() {
-    /*
-    vec4 nv = texture3D(Noise3D,Scale*gl_TexCoord[0].xyz);
-    float n = abs(nv[0] - 0.25)
-            + abs(nv[1] - 0.125)
-            + abs(nv[2] - 0.0625)
-            + abs(nv[3] - 0.03125);
-    n = 0.5*sin(12.0*n)+0.5;*/
-    //gl_FragColor = blinn() * mix(Vein, Marble, n);
-    gl_FragColor = texture2D(Noise3D, gl_TexCoord[0].xy);
+    gl_FragColor = length(blinn())/2 * texture2D(Noise3D, gl_TexCoord[0].xy);
 }

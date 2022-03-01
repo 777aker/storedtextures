@@ -6,6 +6,7 @@
 * PgDn/PgUp - zoom in and out
 * 0 - reset view angle
 * -/+ - light height
+* 1 - change mode
 * ESC - Exit
 */
 #include "x239lib/CSCIx239.h"
@@ -18,6 +19,7 @@ int tex; // texture
 float asp = 1; // aspect ratio
 float dim = 3; // size of world
 int shader; // shader
+int mode = 0; // mode
 
 // noise based on 
 // http://www.science-and-fiction.org/rendering/noise.html
@@ -45,6 +47,8 @@ int myNoiseTex(int unit) {
 	int valy;
 	float distance;
 	float tempdis;
+	int vorx = 0;
+	int vory = 0;
 	// make voronoi different across runs very simply
 	// by just adding a simple random number
 	srand(time(NULL));
@@ -54,8 +58,72 @@ int myNoiseTex(int unit) {
 	// fill in our voronoi points
 	for (int i = 0; i < size / cellsize; i++) {
 		for (int j = 0; j < size / cellsize; j++) {
-			voronoi[i][j][0] = rand2D(j+r, i);
-			voronoi[i][j][1] = rand2D(i+r, j);
+			voronoi[i][j][0] = rand2D(j + r, i);
+			voronoi[i][j][1] = rand2D(i + r, j);
+		}
+	}
+	// voronoi colors? sections? idk, categorization?
+	// stores 10 different types
+	float vorsections[size / (int) cellsize][size / (int) cellsize][3];
+	for (int i = 0; i < size / cellsize; i++) {
+		for (int j = 0; j < size / cellsize; j++) {
+			switch ((int)floor(rand2D(i + r, j + r) * 10)) {
+			case 0:
+				vorsections[i][j][0] = 1;
+				vorsections[i][j][1] = 0;
+				vorsections[i][j][2] = 0;
+				break;
+			case 1:
+				vorsections[i][j][0] = .5;
+				vorsections[i][j][1] = .5;
+				vorsections[i][j][2] = .5;
+				break;
+			case 2:
+				vorsections[i][j][0] = .2;
+				vorsections[i][j][1] = 0;
+				vorsections[i][j][2] = .5;
+				break;
+			case 3:
+				vorsections[i][j][0] = .6;
+				vorsections[i][j][1] = .4;
+				vorsections[i][j][2] = .2;
+				break;
+			case 4:
+				vorsections[i][j][0] = 1;
+				vorsections[i][j][1] = 1;
+				vorsections[i][j][2] = 1;
+				break;
+			case 5:
+				vorsections[i][j][0] = 1;
+				vorsections[i][j][1] = 0;
+				vorsections[i][j][2] = 1;
+				break;
+			case 6:
+				vorsections[i][j][0] = 0;
+				vorsections[i][j][1] = 1;
+				vorsections[i][j][2] = 0;
+				break;
+			case 7:
+				vorsections[i][j][0] = 0;
+				vorsections[i][j][1] = 0;
+				vorsections[i][j][2] = 1;
+				break;
+			case 8:
+				vorsections[i][j][0] = 0;
+				vorsections[i][j][1] = .4;
+				vorsections[i][j][2] = .8;
+				break;
+			case 9:
+				vorsections[i][j][0] = .4;
+				vorsections[i][j][1] = .8;
+				vorsections[i][j][2] = .4;
+				break;
+			default:
+				vorsections[i][j][0] = 0.2;
+				vorsections[i][j][1] = 0.2;
+				vorsections[i][j][2] = 0.2;
+				break;
+			}
 		}
 	}
 	// loop through all the pixels of our texture
@@ -73,8 +141,8 @@ int myNoiseTex(int unit) {
 			distance = 50;
 			// check to see if neighboring voronoi points are closer
 			// if they are then that is our distance
-			for (int i = -1; i <= 1; i++) {
-				for (int j = -1; j <= 1; j++) {
+			for (int i = -1; i <= 1 && i < size / (int)cellsize; i++) {
+				for (int j = -1; j <= 1 && size / (int)cellsize; j++) {
 					// but our voronoi points aren't really points in space
 					// but a point away from bottom left of their cell
 					// so we have to do some weird math 
@@ -95,15 +163,41 @@ int myNoiseTex(int unit) {
 						
 					tempdis = sqrt(pow(xvor, 2) +
 						pow(yvor, 2));
-					if (tempdis < distance)
+					if (tempdis < distance) {
 						distance = tempdis;
+						vorx = valx + i;
+						vory = valy + j;
+					}
 				}
 			}
-
-			pix[point] = distance;
-			pix[point + 1] = distance;
-			pix[point + 2] = distance;
-			pix[point + 3] = 1;
+			// different display modes just for fun
+			switch (mode) {
+			case 0:
+				pix[point] = (1 - distance) * vorsections[vorx][vory][0];
+				pix[point + 1] = (1 - distance) * vorsections[vorx][vory][1];
+				pix[point + 2] = (1 - distance) * vorsections[vorx][vory][2];
+				pix[point + 3] = 1;
+				break;
+			case 1:
+				pix[point] = (1 - distance);
+				pix[point + 1] = (1 - distance);
+				pix[point + 2] = (1 - distance);
+				pix[point + 3] = 1;
+				break;
+			case 2:
+				pix[point] = vorsections[vorx][vory][0];
+				pix[point + 1] = vorsections[vorx][vory][1];
+				pix[point + 2] = vorsections[vorx][vory][2];
+				pix[point + 3] = 1;
+				break;
+			case 3:
+				pix[point] = (distance);
+				pix[point + 1] = (distance);
+				pix[point + 2] = (distance);
+				pix[point + 3] = 1;
+				break;
+			}
+			
 		}
 	}
 
@@ -155,6 +249,7 @@ void display(GLFWwindow* window) {
 	// display parameters
 	SetColor(1, 1, 1);
 	glWindowPos2i(5, 5);
+	Print("mode = %d", mode);
 	// render scene
 	ErrCheck("display");
 	glFlush();
@@ -203,6 +298,11 @@ void key(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	case GLFW_KEY_MINUS:
 		lh -= 0.1;
 		break;
+	case GLFW_KEY_1:
+		mode += 1;
+		mode %= 4;
+		myNoiseTex(GL_TEXTURE1);
+		break;
 	}
 
 	// wrap angles
@@ -227,7 +327,7 @@ void reshape(GLFWwindow* window, int width, int height) {
 // main program
 int main(int argc, char* argv[]) {
 	// initialize GLFW
-	GLFWwindow* window = InitWindow("HW07: Stored Textures", 1, 600, 600, &reshape, &key);
+	GLFWwindow* window = InitWindow("Kelley Kelley HW07: Stored Textures", 1, 600, 600, &reshape, &key);
 	//  Load random texture
 	myNoiseTex(GL_TEXTURE1);
 	shader = CreateShaderProg("hw07.vert", "hw07.frag");
