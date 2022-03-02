@@ -42,5 +42,10 @@ vec4 blinn() {
 uniform sampler2D Noise3D;
 
 void main() {
-    gl_FragColor = length(blinn())/2 * texture2D(Noise3D, gl_TexCoord[0].xy);
+    vec4 texcolor = texture2D(Noise3D, gl_TexCoord[0].xy);
+    float light = length(blinn());
+    texcolor[2] = light * pow(texcolor[2], 2) / 2;
+    texcolor[1] *= light / 2;
+    texcolor[1] = mix(texcolor[2], texcolor[1], pow(texcolor[1], 2));
+    gl_FragColor = texcolor;
 }

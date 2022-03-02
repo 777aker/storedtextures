@@ -19,7 +19,7 @@ int tex; // texture
 float asp = 1; // aspect ratio
 float dim = 3; // size of world
 int shader; // shader
-int mode = 0; // mode
+int mode = 3; // mode
 
 // noise based on 
 // http://www.science-and-fiction.org/rendering/noise.html
@@ -126,6 +126,7 @@ int myNoiseTex(int unit) {
 			}
 		}
 	}
+
 	// loop through all the pixels of our texture
 	for (int y = 0; y < size; y++) {
 		for (int x = 0; x < size; x++) {
@@ -173,31 +174,96 @@ int myNoiseTex(int unit) {
 			// different display modes just for fun
 			switch (mode) {
 			case 0:
-				pix[point] = (1 - distance) * vorsections[vorx][vory][0];
-				pix[point + 1] = (1 - distance) * vorsections[vorx][vory][1];
+				pix[point] = 0;
+				pix[point + 1] = 0;
 				pix[point + 2] = (1 - distance) * vorsections[vorx][vory][2];
 				pix[point + 3] = 1;
 				break;
 			case 1:
-				pix[point] = (1 - distance);
-				pix[point + 1] = (1 - distance);
+				pix[point] = 0;
+				pix[point + 1] = 0;
 				pix[point + 2] = (1 - distance);
 				pix[point + 3] = 1;
 				break;
 			case 2:
-				pix[point] = vorsections[vorx][vory][0];
-				pix[point + 1] = vorsections[vorx][vory][1];
+				pix[point] = 0;
+				pix[point + 1] = 0;
 				pix[point + 2] = vorsections[vorx][vory][2];
 				pix[point + 3] = 1;
 				break;
 			case 3:
-				pix[point] = (distance);
-				pix[point + 1] = (distance);
+				pix[point] = 0;
+				pix[point + 1] = 0;
 				pix[point + 2] = (distance);
 				pix[point + 3] = 1;
 				break;
 			}
 			
+		}
+	}
+
+	cellsize *= 2;
+	// not sure if I did stored textures assignment requirements
+	// so a second voronoi smaller
+	for (int y = 0; y < size; y++) {
+		for (int x = 0; x < size; x++) {
+			// sooo, math means pixel point =
+			point = y * size * 4 + x * 4;
+			// this is which voronoi grid point / cell we are in
+			float xval = x / cellsize;
+			float yval = y / cellsize;
+			// floor it so we can access voronoi array for this point
+			valx = floor(xval);
+			valy = floor(yval);
+			// make distance really big since we need min distance
+			distance = 50;
+			// check to see if neighboring voronoi points are closer
+			// if they are then that is our distance
+			for (int i = -1; i <= 1 && i < size / (int)cellsize; i++) {
+				for (int j = -1; j <= 1 && size / (int)cellsize; j++) {
+					// but our voronoi points aren't really points in space
+					// but a point away from bottom left of their cell
+					// so we have to do some weird math 
+					float xvor;
+					float yvor;
+					if (i == -1)
+						xvor = 1 - voronoi[valx + i][valy + j][0] + (xval - floor(xval));
+					else if (i == 0)
+						xvor = voronoi[valx + i][valy + j][0] - (xval - floor(xval));
+					else
+						xvor = 1 - (xval - floor(xval)) + voronoi[valx + i][valy + j][0];
+					if (j == -1)
+						yvor = 1 - voronoi[valx + i][valy + j][1] + (yval - floor(yval));
+					else if (j == 0)
+						yvor = voronoi[valx + i][valy + j][1] - (yval - floor(yval));
+					else
+						yvor = 1 - (yval - floor(yval)) + voronoi[valx + i][valy + j][1];
+
+					tempdis = sqrt(pow(xvor, 2) +
+						pow(yvor, 2));
+					if (tempdis < distance) {
+						distance = tempdis;
+						vorx = valx + i;
+						vory = valy + j;
+					}
+				}
+			}
+			// different display modes just for fun
+			switch (mode) {
+			case 0:
+				pix[point + 1] = (1 - distance) * vorsections[vorx][vory][2];
+				break;
+			case 1:
+				pix[point + 1] = (1 - distance);
+				break;
+			case 2:
+				pix[point + 1] = vorsections[vorx][vory][2];
+				break;
+			case 3:
+				pix[point + 1] = (distance);
+				break;
+			}
+
 		}
 	}
 

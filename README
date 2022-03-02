@@ -7,7 +7,7 @@ voronoi noise stored in a texture passed to frag shader
 adopted this tutorial
 https://www.ronja-tutorials.com/post/028-voronoi-noise/#3d-voronoi-1
 
-Time spent: 5 hr 30 min
+Time spent: 6 hr 30 min
 
 Key bindings:
 arrows - change view angle
